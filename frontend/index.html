@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OsteoVision AI - Medical Bone Imaging & Diagnostic Intelligence</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome 6.5.1 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Three.js 3D Graphics Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        :root {
+            --bg-dark: #070b14;
+            --bg-surface: #0f172a;
+            --bg-card: rgba(15, 23, 42, 0.85);
+            --bg-card-hover: rgba(30, 41, 59, 0.9);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(56, 189, 248, 0.25);
+            --primary: #06b6d4;
+            --primary-light: #38bdf8;
+            --primary-glow: rgba(6, 182, 212, 0.35);
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --text-main: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-body);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* 3D WebGL Background Canvas */
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: auto;
+        }
+
+        /* Medical Grid Overlay Texture */
+        .medical-grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: 
+                radial-gradient(circle at 50% 30%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 60px 60px, 60px 60px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* App Layout Shell */
+        .app-layout {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+        }
+
+        .interactive-element {
+            pointer-events: auto;
+        }
+
+        /* Header Navigation */
+        header {
+            padding: 1rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(7, 11, 20, 0.88);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2));
+            border: 1px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-light);
+            font-size: 1.3rem;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-title {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.45rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff 30%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+            position: relative;
+            padding: 4px 0;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-light);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--primary);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 1.6s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.35); opacity: 0.5; }
+        }
+
+        /* User Profile Badge & Auth Button */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border-glow);
+            padding: 5px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid var(--primary);
+        }
+
+        .btn-auth {
+            background: rgba(6, 182, 212, 0.12);
+            border: 1px solid var(--primary);
+            color: #ffffff;
+            padding: 9px 20px;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.25s ease;
+        }
+
+        .btn-auth:hover {
+            background: var(--primary);
+            color: #070b14;
+            box-shadow: 0 0 20px var(--primary-glow);
+            transform: translateY(-1px);
+        }
+
+        /* Hero Banner Section */
+        .hero-banner {
+            padding: 2.5rem 3rem 1rem 3rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .hero-content {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.6));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-xl);
+            padding: 2rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-text h1 {
+            font-family: var(--font-heading);
+            font-size: 2.1rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 0.6rem;
+            background: linear-gradient(135deg, #ffffff 40%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-text p {
+            color: var(--text-secondary);
+            font-size: 0.98rem;
+            max-width: 720px;
+            font-weight: 400;
+        }
+
+        .hero-metrics {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .metric-card {
+            background: rgba(7, 11, 20, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 18px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .metric-value {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary-light);
+        }
+
+        .metric-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        /* Main Workspace Grid */
+        main {
+            flex: 1;
+            padding: 1.5rem 3rem 2.5rem 3rem;
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            gap: 2.2rem;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 1100px) {
+            header {
+                padding: 1rem 1.5rem;
+            }
+            .nav-center {
+                display: none;
+            }
+            .hero-banner {
+                padding: 1.5rem;
+            }
+            .hero-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .hero-metrics {
+                width: 100%;
+                justify-content: space-between;
+            }
+            main {
+                grid-template-columns: 1fr;
+                padding: 1rem 1.5rem;
+            }
+        }
+
+        /* Glassmorphic Panels */
+        .glass-panel {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-xl);
+            padding: 2.2rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.45);
+            display: flex;
+            flex-direction: column;
+            gap: 1.6rem;
+            transition: all 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .panel-title {
+            font-family: var(--font-heading);
+            font-size: 1.35rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-main);
+        }
+
+        .panel-title i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .panel-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--primary-light);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Upload Area */
+        .upload-zone {
+            border: 2px dashed rgba(56, 189, 248, 0.35);
+            border-radius: var(--radius-lg);
+            padding: 2.8rem 1.8rem;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(15, 23, 42, 0.6);
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(6, 182, 212, 0.08);
+            box-shadow: 0 0 30px var(--primary-glow);
+            transform: translateY(-2px);
+        }
+
+        .upload-icon-wrapper {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15));
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-light);
+            font-size: 2rem;
+            margin-bottom: 1.2rem;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .upload-title {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.4rem;
+        }
+
+        .upload-subtext {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 1.2rem;
+        }
+
+        .format-pills {
+            display: flex;
+            gap: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .format-pill {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 6px;
+            background: rgba(30, 41, 59, 0.8);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .btn-browse {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid var(--accent);
+            color: #ffffff;
+            padding: 8px 22px;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.8rem;
+            transition: all 0.25s ease;
+        }
+
+        .btn-browse:hover {
+            background: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Samples Gallery */
+        .samples-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .samples-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .samples-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .samples-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.85rem;
+        }
+
+        .sample-btn {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sample-btn:hover {
+            background: rgba(6, 182, 212, 0.15);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .sample-btn img {
+            width: 100%;
+            height: 65px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+        }
+
+        .sample-btn span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+            text-transform: capitalize;
+        }
+
+        /* Main Action Button */
+        .btn-action {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-lg);
+            padding: 1.1rem 2rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 12px 30px var(--primary-glow);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-action:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 40px var(--primary-glow);
+            filter: brightness(1.1);
+        }
+
+        .btn-action:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Analysis Progress Pipeline Stepper */
+        .progress-pipeline {
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            background: rgba(7, 11, 20, 0.7);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+        }
+
+        .pipeline-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pipeline-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .pipeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            z-index: 2;
+            flex: 1;
+        }
+
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid var(--border-subtle);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .pipeline-step.active .step-icon {
+            background: var(--primary);
+            border-color: var(--primary-light);
+            color: #070b14;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .pipeline-step.completed .step-icon {
+            background: var(--success);
+            border-color: var(--success);
+            color: #ffffff;
+        }
+
+        .step-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .pipeline-step.active .step-label {
+            color: var(--primary-light);
+        }
+
+        /* Results Panel & Dual Image Viewer */
+        .viewer-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: #020617;
+            border: 1px solid var(--border-glow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .viewer-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: opacity 0.3s ease;
+        }
+
+        .viewer-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .viewer-toggle {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            display: flex;
+            background: rgba(7, 11, 20, 0.9);
+            backdrop-filter: blur(12px);
+            padding: 4px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-glow);
+            z-index: 10;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .toggle-btn.active {
+            background: var(--primary);
+            color: #070b14;
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        /* Primary Verdict Display Header */
+        .verdict-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+        }
+
+        .verdict-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .verdict-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+        }
+
+        .verdict-title {
+            font-size: 1.55rem;
+            font-weight: 800;
+            font-family: var(--font-heading);
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+        }
+
+        .badge-risk {
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Probability Bars Breakdown */
+        .prob-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--border-subtle);
+            padding: 1.2rem;
+            border-radius: var(--radius-lg);
+        }
+
+        .prob-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .prob-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .prob-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .prob-bar-fill {
+            height: 100%;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Clinical Guidance Box */
+        .clinical-box {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.7));
+            border-left: 4px solid var(--primary);
+            padding: 1.2rem 1.4rem;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-subtle);
+            border-right: 1px solid var(--border-subtle);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .clinical-box strong {
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        /* Medical Disclaimer Footer */
+        footer {
+            margin-top: auto;
+            padding: 1.5rem 3rem;
+            background: rgba(7, 11, 20, 0.95);
+            border-top: 1px solid var(--border-glow);
+            z-index: 100;
+        }
+
+        .disclaimer-banner {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-md);
+            color: #fde68a;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .disclaimer-banner i {
+            font-size: 1.4rem;
+            color: var(--warning);
+            flex-shrink: 0;
+        }
+
+        /* Spinner Component */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ==========================================
+           BONEAI MEDICAL ASSISTANT STYLING
+           ========================================== */
+        
+        /* Floating Trigger Button */
+        #assistant-toggle-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 150;
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #ffffff;
+            border: 1px solid var(--primary-light);
+            border-radius: 999px;
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 30px var(--primary-glow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #assistant-toggle-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 40px var(--primary-glow);
+        }
+
+        .assistant-btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .assistant-btn-pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* BoneAI Assistant Chat Panel Drawer */
+        #assistant-panel {
+            position: fixed;
+            bottom: 90px;
+            right: 25px;
+            width: 440px;
+            max-width: calc(100vw - 30px);
+            height: 600px;
+            max-height: calc(100vh - 120px);
+            z-index: 150;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .assistant-header {
+            padding: 1.2rem 1.5rem;
+            background: rgba(7, 11, 20, 0.9);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .assistant-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .assistant-avatar-badge {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2));
+            border: 1px solid var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-light);
+            font-size: 1.2rem;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .assistant-name {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: var(--text-main);
+        }
+
+        .assistant-status {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .assistant-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .assistant-close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        .assistant-disclaimer-pill {
+            padding: 8px 16px;
+            background: rgba(6, 182, 212, 0.08);
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.74rem;
+            color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.4;
+        }
+
+        .assistant-chat-history {
+            flex: 1;
+            padding: 1.2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .assistant-chat-history::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .assistant-chat-history::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+        }
+
+        .chat-message {
+            display: flex;
+            flex-direction: column;
+            max-width: 88%;
+        }
+
+        .chat-message.user {
+            align-self: flex-end;
+        }
+
+        .chat-message.assistant {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 12px 16px;
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .chat-message.user .message-bubble {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .chat-message.assistant .message-bubble {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid var(--border-glow);
+            color: var(--text-main);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-bubble strong {
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .message-time {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            padding: 0 4px;
+        }
+
+        .chat-message.user .message-time {
+            align-self: flex-end;
+        }
+
+        /* Quick Prompt Action Chips inside Chat */
+        .assistant-prompt-chips {
+            padding: 8px 1.2rem;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            border-top: 1px solid var(--border-subtle);
+            background: rgba(7, 11, 20, 0.5);
+        }
+
+        .assistant-prompt-chips::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .assistant-prompt-chips::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+        }
+
+        .prompt-chip {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid var(--border-glow);
+            color: var(--primary-light);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .prompt-chip:hover {
+            background: var(--primary);
+            color: #070b14;
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        /* Assistant Input Form */
+        .assistant-input-form {
+            padding: 1rem 1.2rem;
+            background: rgba(7, 11, 20, 0.95);
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 10px;
+        }
+
+        .assistant-input-form input {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-md);
+            padding: 10px 16px;
+            color: #ffffff;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.25s ease;
+        }
+
+        .assistant-input-form input:focus {
+            border-color: var(--primary);
+        }
+
+        .assistant-input-form button {
+            background: var(--primary);
+            color: #070b14;
+            border: none;
+            border-radius: var(--radius-md);
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .assistant-input-form button:hover {
+            box-shadow: 0 0 15px var(--primary-glow);
+            transform: scale(1.05);
+        }
+
+        /* Hidden GSI Container */
+        #gsi-button-hidden {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 3D Viewport Controls Hint */
+        .controls-hint {
+            position: fixed;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(7, 11, 20, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glow);
+            padding: 8px 22px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            pointer-events: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Canvas Background Container -->
+    <div id="webgl-container"></div>
+    <div class="medical-grid-overlay"></div>
+
+    <!-- Hidden element for Google Identity SDK rendering -->
+    <div id="gsi-button-hidden"></div>
+
+    <!-- UI Shell Overlay Layout -->
+    <div class="app-layout">
+        
+        <!-- Header Navigation Bar -->
+        <header class="interactive-element">
+            <a href="#" class="brand-container">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-bone"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">OsteoVision AI</span>
+                    <span class="brand-subtitle">Diagnostic Intelligence</span>
+                </div>
+            </a>
+
+            <nav class="nav-center">
+                <a href="#dashboard" class="nav-link active">Dashboard</a>
+                <a href="#analysis" class="nav-link">Analysis</a>
+                <a href="#samples" class="nav-link">Pathology Samples</a>
+                <a href="#about" class="nav-link">About AI Model</a>
+            </nav>
+
+            <div class="nav-right">
+                <div class="status-pill">
+                    <div class="pulse-dot"></div>
+                    <span>PyTorch Server Online</span>
+                </div>
+
+                <!-- User Profile / Google Auth Box -->
+                <div id="user-nav-box">
+                    <button class="btn-auth" id="btn-google-login" onclick="initiateGoogleLogin()">
+                        <i class="fa-brands fa-google" style="color: #ea4335;"></i>
+                        <span>Continue with Google</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero-banner interactive-element" id="dashboard">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>AI-Powered Bone Imaging Analysis</h1>
+                    <p>Advanced deep learning system combining fine-tuned EfficientNet-B4 multi-class pathology classification with Grad-CAM explainability heatmaps for rapid clinical decision support.</p>
+                </div>
+                <div class="hero-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value">4</div>
+                        <div class="metric-label">Pathology Classes</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">Grad-CAM</div>
+                        <div class="metric-label">Explainable AI</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">CLAHE</div>
+                        <div class="metric-label">Contrast Engine</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Workspace Layout Grid -->
+        <main id="analysis">
+            
+            <!-- Left Panel: Upload & Diagnostic Trigger Controls -->
+            <div class="glass-panel interactive-element">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Bone X-Ray Upload</span>
+                    </div>
+                    <span class="panel-badge">Step 1 of 2</span>
+                </div>
+
+                <!-- Drag & Drop Zone -->
+                <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+                    <div class="upload-icon-wrapper">
+                        <i class="fa-solid fa-file-medical"></i>
+                    </div>
+                    <div class="upload-title">Drag & Drop Bone Scan Here</div>
+                    <div class="upload-subtext" id="upload-label">or click anywhere to browse local files</div>
+                    <button type="button" class="btn-browse">Browse Image Files</button>
+                    
+                    <div class="format-pills">
+                        <span class="format-pill">PNG</span>
+                        <span class="format-pill">JPG</span>
+                        <span class="format-pill">JPEG</span>
+                    </div>
+                    
+                    <input type="file" id="file-input" accept="image/*">
+                </div>
+
+                <!-- Samples Section -->
+                <div class="samples-section" id="samples">
+                    <div class="samples-header">
+                        <span class="samples-title">Or Select Pre-Loaded Case Sample</span>
+                    </div>
+                    <div class="samples-grid" id="samples-grid">
+                        <!-- Loaded dynamically via API -->
+                    </div>
+                </div>
+
+                <!-- Analysis Progress Pipeline Indicator -->
+                <div class="progress-pipeline" id="progress-pipeline">
+                    <div class="pipeline-title">
+                        <i class="fa-solid fa-gears"></i>
+                        <span>Processing Diagnostic Pipeline...</span>
+                    </div>
+                    <div class="pipeline-steps">
+                        <div class="pipeline-step completed" id="step-1">
+                            <div class="step-icon"><i class="fa-solid fa-check"></i></div>
+                            <div class="step-label">Uploaded</div>
+                        </div>
+                        <div class="pipeline-step" id="step-2">
+                            <div class="step-icon">2</div>
+                            <div class="step-label">CLAHE Filter</div>
+                        </div>
+                        <div class="pipeline-step" id="step-3">
+                            <div class="step-icon">3</div>
+                            <div class="step-label">AI Inference</div>
+                        </div>
+                        <div class="pipeline-step" id="step-4">
+                            <div class="step-icon">4</div>
+                            <div class="step-label">Grad-CAM</div>
+                        </div>
+                        <div class="pipeline-step" id="step-5">
+                            <div class="step-icon">5</div>
+                            <div class="step-label">Report Ready</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analyze Action Button -->
+                <button class="btn-action" id="analyze-btn" disabled onclick="runDiagnosis()">
+                    <i class="fa-solid fa-microscope"></i>
+                    <span>Run AI Cancer Diagnosis</span>
+                </button>
+            </div>
+
+            <!-- Right Panel: Results & Explainable AI Report -->
+            <div class="glass-panel interactive-element" id="results-panel" style="opacity: 0.5; pointer-events: none;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fa-solid fa-square-poll-vertical"></i>
+                        <span>AI Diagnostic Report</span>
+                    </div>
+                    <span class="panel-badge">Step 2 of 2</span>
+                </div>
+
+                <!-- Dual View Container (Raw X-Ray / Grad-CAM Heatmap) -->
+                <div class="viewer-container">
+                    <img id="display-img" class="viewer-img" src="" alt="X-Ray Preview" style="display: none;">
+                    
+                    <div id="viewer-placeholder" class="viewer-placeholder">
+                        <i class="fa-solid fa-notes-medical" style="font-size: 3rem; color: var(--primary); margin-bottom: 8px;"></i>
+                        <span style="font-weight: 700; color: var(--text-main); font-size: 1.05rem;">No Image Loaded Yet</span>
+                        <span>Upload a bone X-Ray scan on the left panel to execute deep learning pathology diagnosis.</span>
+                    </div>
+
+                    <div class="viewer-toggle" id="viewer-toggle-box" style="display: none;">
+                        <button class="toggle-btn active" id="btn-show-xray" onclick="showView('xray')">X-Ray (CLAHE)</button>
+                        <button class="toggle-btn" id="btn-show-cam" onclick="showView('cam')">AI Heatmap</button>
+                    </div>
+                </div>
+
+                <!-- Verdict Display Header -->
+                <div class="verdict-header" id="verdict-box" style="display: none;">
+                    <div class="verdict-info">
+                        <span class="verdict-subtitle">Primary AI Diagnosis</span>
+                        <div class="verdict-title" id="verdict-class">Normal Bone</div>
+                    </div>
+                    <div class="badge-risk" id="verdict-risk" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">Low Risk</div>
+                </div>
+
+                <!-- Probability Bar Chart Breakdown -->
+                <div class="prob-bars" id="prob-bars" style="display: none;">
+                    <!-- Probability items populated dynamically -->
+                </div>
+
+                <!-- Clinical Guidance Box -->
+                <div class="clinical-box" id="clinical-box" style="display: none;">
+                    <strong id="clinical-title"><i class="fa-solid fa-user-doctor"></i> Clinical Guidance:</strong>
+                    <span id="clinical-text">Upload a scan to view diagnostic findings.</span>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 3D Controls Hint Footnote -->
+        <div class="controls-hint">
+            <i class="fa-solid fa-cube" style="color: var(--primary);"></i>
+            <span>Interactive 3D Anatomical Viewport: Drag to rotate model | Scroll to zoom</span>
+        </div>
+
+        <!-- Medical Disclaimer Footer -->
+        <footer class="interactive-element">
+            <div class="disclaimer-banner">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                    <strong>Medical Disclaimer:</strong> AI-assisted screening tool for clinical support only. This software is not a replacement for independent professional medical diagnosis, radiological examination, or tissue biopsy. All findings must be validated by a licensed physician.
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- ==========================================
+       BONEAI MEDICAL ASSISTANT WIDGET
+       ========================================== -->
+    <button id="assistant-toggle-btn" class="interactive-element" onclick="toggleAssistantPanel()" title="Open BoneAI Assistant">
+        <div class="assistant-btn-icon">
+            <i class="fa-solid fa-user-doctor"></i>
+        </div>
+        <span class="assistant-btn-text">BoneAI Assistant</span>
+        <span class="assistant-btn-pulse"></span>
+    </button>
+
+    <div id="assistant-panel" class="interactive-element">
+        <div class="assistant-header">
+            <div class="assistant-title-group">
+                <div class="assistant-avatar-badge">
+                    <i class="fa-solid fa-user-doctor"></i>
+                </div>
+                <div>
+                    <div class="assistant-name">BoneAI Assistant</div>
+                    <div class="assistant-status"><i class="fa-solid fa-shield-halved" style="color: var(--success); font-size: 0.7rem;"></i> Medical Information Support</div>
+                </div>
+            </div>
+            <button class="assistant-close-btn" onclick="toggleAssistantPanel()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="assistant-disclaimer-pill">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Educational screening assistant • Not a doctor or confirmed medical diagnosis</span>
+        </div>
+
+        <div id="assistant-chat-history" class="assistant-chat-history">
+            <div class="chat-message assistant">
+                <div class="message-bubble">Hello! I'm your **BoneAI Medical Assistant**. I can help you understand your scan results, explain medical terms in simple language, discuss your concerns, and help you prepare questions for your doctor.\n\nWhat would you like to discuss today?</div>
+                <div class="message-time">Just now</div>
+            </div>
+        </div>
+
+        <div id="assistant-prompt-chips" class="assistant-prompt-chips">
+            <button class="prompt-chip" onclick="sendQuickPrompt('Explain my scan result in simple language')">🔍 Explain My Result</button>
+            <button class="prompt-chip" onclick="sendQuickPrompt('What does the confidence score mean?')">📊 Explain Confidence Score</button>
+            <button class="prompt-chip" onclick="sendQuickPrompt('What questions should I ask my doctor?')">📋 Questions for Doctor</button>
+            <button class="prompt-chip" onclick="sendQuickPrompt('What should I do next?')">🎯 What Should I Do Next?</button>
+            <button class="prompt-chip" onclick="sendQuickPrompt('What is osteosarcoma?')">🧬 What is Osteosarcoma?</button>
+            <button class="prompt-chip" onclick="sendQuickPrompt('What does the Grad-CAM heatmap mean?')">🔬 Explain Heatmap</button>
+        </div>
+
+        <form class="assistant-input-form" onsubmit="event.preventDefault(); sendAssistantMessage();">
+            <input type="text" id="assistant-input" placeholder="Ask about your scan or medical questions..." autocomplete="off">
+            <button type="submit" id="assistant-send-btn" title="Send Message">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </form>
+    </div>
+
+    <!-- Application JavaScript: Three.js 3D Rendering, Auth, API & AI Assistant Logic -->
+    <script>
+        // Dynamic API URL: Uses local FastAPI backend during local dev, or custom live backend when deployed on Vercel
+        const API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://127.0.0.1:8000'
+            : (localStorage.getItem('CUSTOM_BACKEND_URL') || window.BACKEND_API_URL || 'http://127.0.0.1:8000');
+        let selectedFile = null;
+        let enhancedImgB64 = null;
+        let heatmapImgB64 = null;
+        let currentUser = null;
+        let lastAnalysisResult = null;
+
+        // Google OAuth Client ID loaded dynamically via backend /api/config
+        let GOOGLE_CLIENT_ID = null;
+
+        // ==========================================
+        // GOOGLE OAUTH 2.0 PRODUCTION AUTHENTICATION
+        // ==========================================
+        
+        function initiateGoogleLogin() {
+            window.location.href = `${API_URL}/api/auth/google/login`;
+        }
+
+        async function initGoogleServicesSDK() {
+            try {
+                const res = await fetch(`${API_URL}/api/config`);
+                if (!res.ok) return;
+                const config = await res.json();
+                
+                if (config.google_client_id) {
+                    GOOGLE_CLIENT_ID = config.google_client_id;
+                    if (window.google && google.accounts && google.accounts.id) {
+                        google.accounts.id.initialize({
+                            client_id: config.google_client_id,
+                            callback: handleGoogleCredentialResponse,
+                            auto_select: false,
+                            cancel_on_tap_outside: true
+                        });
+                    }
+                }
+            } catch (err) {
+                console.log("Config fetch note:", err);
+            }
+        }
+
+        async function handleGoogleCredentialResponse(response) {
+            if (!response || !response.credential) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/google`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.user) {
+                        setUserSession(data.user);
+                    }
+                }
+            } catch (err) {
+                console.error("Google Auth verification error:", err);
+            }
+        }
+
+        function setUserSession(user) {
+            currentUser = user;
+            localStorage.setItem('user_session', JSON.stringify(user));
+            
+            const navBox = document.getElementById('user-nav-box');
+            navBox.innerHTML = `
+                <div class="user-profile">
+                    <img src="${user.picture}" class="user-avatar" alt="Avatar">
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-weight: 700; color: #f8fafc; font-size: 0.85rem;">${user.name}</span>
+                        <span style="font-size: 0.72rem; color: var(--primary-light); font-weight: 500;">${user.email}</span>
+                    </div>
+                    <button onclick="logoutUser()" title="Sign Out" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; margin-left: 8px;">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        async function logoutUser() {
+            try {
+                await fetch(`${API_URL}/api/auth/logout`, { method: 'POST' });
+            } catch (e) {}
+            currentUser = null;
+            localStorage.removeItem('user_session');
+            const navBox = document.getElementById('user-nav-box');
+            navBox.innerHTML = `
+                <button class="btn-auth" id="btn-google-login" onclick="initiateGoogleLogin()">
+                    <i class="fa-brands fa-google" style="color: #ea4335;"></i>
+                    <span>Continue with Google</span>
+                </button>
+            `;
+        }
+
+        async function checkExistingSession() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const authError = urlParams.get('auth_error');
+            const authSuccess = urlParams.get('auth_success');
+            const userPayloadStr = urlParams.get('user');
+
+            if (authError) {
+                if (authError === "access_denied" || authError === "user_cancelled") {
+                    alert("Google sign-in was cancelled.");
+                }
+                window.history.replaceState(null, null, window.location.pathname);
+            } else if (authSuccess && userPayloadStr) {
+                try {
+                    const user = JSON.parse(decodeURIComponent(userPayloadStr));
+                    setUserSession(user);
+                    window.history.replaceState(null, null, window.location.pathname);
+                    return;
+                } catch (e) {
+                    console.error("Error parsing redirect user session:", e);
+                }
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/me`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.authenticated && data.user) {
+                        setUserSession(data.user);
+                        return;
+                    }
+                }
+            } catch (e) {}
+
+            const saved = localStorage.getItem('user_session');
+            if (saved) {
+                try {
+                    setUserSession(JSON.parse(saved));
+                } catch(e) {}
+            }
+
+            initGoogleServicesSDK();
+        }
+
+        window.addEventListener('load', () => {
+            if (window.location.hash) {
+                const params = new URLSearchParams(window.location.hash.substring(1));
+                const idToken = params.get('id_token');
+                if (idToken) {
+                    handleGoogleCredentialResponse({ credential: idToken });
+                    window.history.replaceState(null, null, window.location.pathname);
+                }
+            }
+        });
+
+        // ==========================================
+        // THREE.JS ANATOMICAL BONE VIEWPORT
+        // ==========================================
+        let scene, camera, renderer, boneMesh, particles;
+
+        function init3D() {
+            const container = document.getElementById('webgl-container');
+            
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x070b14, 0.035);
+
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 14);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            container.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enableZoom = true;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const cyanLight = new THREE.PointLight(0x06b6d4, 3.5, 35);
+            cyanLight.position.set(6, 6, 6);
+            scene.add(cyanLight);
+
+            const blueLight = new THREE.PointLight(0x3b82f6, 3, 35);
+            blueLight.position.set(-6, -6, -6);
+            scene.add(blueLight);
+
+            const boneGroup = new THREE.Group();
+
+            const shaftGeo = new THREE.CylinderGeometry(0.7, 0.7, 6, 32);
+            const jointTopGeo = new THREE.SphereGeometry(1.2, 32, 32);
+            const jointBottomGeo = new THREE.SphereGeometry(1.3, 32, 32);
+
+            const boneMat = new THREE.MeshStandardMaterial({
+                color: 0xe2e8f0,
+                metalness: 0.15,
+                roughness: 0.35
+            });
+
+            const wireMat = new THREE.MeshBasicMaterial({
+                color: 0x06b6d4,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.12
+            });
+
+            const shaftMesh = new THREE.Mesh(shaftGeo, boneMat);
+            const jointTop = new THREE.Mesh(jointTopGeo, boneMat);
+            jointTop.position.y = 3;
+            const jointBottom = new THREE.Mesh(jointBottomGeo, boneMat);
+            jointBottom.position.y = -3;
+
+            const shaftWire = new THREE.Mesh(shaftGeo, wireMat);
+            shaftWire.scale.set(1.05, 1.05, 1.05);
+
+            boneGroup.add(shaftMesh);
+            boneGroup.add(jointTop);
+            boneGroup.add(jointBottom);
+            boneGroup.add(shaftWire);
+
+            boneGroup.rotation.z = 0.2;
+            scene.add(boneGroup);
+            boneMesh = boneGroup;
+
+            const particleCount = 500;
+            const particleGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+
+            for(let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 40;
+                positions[i+1] = (Math.random() - 0.5) * 40;
+                positions[i+2] = (Math.random() - 0.5) * 40;
+            }
+
+            particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const particleMat = new THREE.PointsMaterial({
+                color: 0x38bdf8,
+                size: 0.08,
+                transparent: true,
+                opacity: 0.5
+            });
+
+            particles = new THREE.Points(particleGeo, particleMat);
+            scene.add(particles);
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+
+                if(boneMesh) {
+                    boneMesh.rotation.y += 0.004;
+                    boneMesh.position.y = Math.sin(Date.now() * 0.001) * 0.25;
+                }
+
+                if(particles) {
+                    particles.rotation.y += 0.0004;
+                }
+
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        window.onload = () => {
+            init3D();
+            loadSampleGallery();
+            setupDragAndDrop();
+            checkExistingSession();
+        };
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('upload-zone');
+            const fileInput = document.getElementById('file-input');
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('dragover');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                if (files.length > 0) {
+                    handleFileSelected(files[0]);
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelected(e.target.files[0]);
+                }
+            });
+        }
+
+        function handleFileSelected(file) {
+            selectedFile = file;
+            document.getElementById('upload-label').innerText = file.name;
+            document.getElementById('analyze-btn').disabled = false;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById('display-img');
+                img.src = e.target.result;
+                img.style.display = 'block';
+                document.getElementById('viewer-placeholder').style.display = 'none';
+                document.getElementById('viewer-toggle-box').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function loadSampleGallery() {
+            try {
+                const res = await fetch(`${API_URL}/api/samples`);
+                const data = await res.json();
+                const grid = document.getElementById('samples-grid');
+                grid.innerHTML = '';
+
+                if (data.samples && data.samples.length > 0) {
+                    data.samples.forEach(sample => {
+                        const btn = document.createElement('div');
+                        btn.className = 'sample-btn';
+                        btn.onclick = () => selectSample(sample);
+                        btn.innerHTML = `
+                            <img src="${sample.image_b64}" alt="${sample.title}">
+                            <span>${sample.class_name.replace('_', ' ')}</span>
+                        `;
+                        grid.appendChild(btn);
+                    });
+                }
+            } catch (err) {
+                console.log("Samples fallback loading:", err);
+            }
+        }
+
+        function selectSample(sample) {
+            fetch(sample.image_b64)
+                .then(res => res.blob())
+                .then(blob => {
+                    const file = new File([blob], `${sample.class_name}_sample.png`, { type: 'image/png' });
+                    handleFileSelected(file);
+                });
+        }
+
+        async function animatePipelineProgress() {
+            const pipeline = document.getElementById('progress-pipeline');
+            pipeline.style.display = 'flex';
+            
+            const steps = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+            steps.forEach(s => {
+                const el = document.getElementById(s);
+                el.classList.remove('active', 'completed');
+            });
+
+            document.getElementById('step-1').classList.add('completed');
+            document.getElementById('step-2').classList.add('active');
+            
+            await new Promise(r => setTimeout(r, 200));
+            document.getElementById('step-2').classList.remove('active');
+            document.getElementById('step-2').classList.add('completed');
+            document.getElementById('step-3').classList.add('active');
+            
+            await new Promise(r => setTimeout(r, 250));
+            document.getElementById('step-3').classList.remove('active');
+            document.getElementById('step-3').classList.add('completed');
+            document.getElementById('step-4').classList.add('active');
+            
+            await new Promise(r => setTimeout(r, 250));
+            document.getElementById('step-4').classList.remove('active');
+            document.getElementById('step-4').classList.add('completed');
+            document.getElementById('step-5').classList.add('active');
+        }
+
+        async function runDiagnosis() {
+            if (!selectedFile) return;
+
+            const btn = document.getElementById('analyze-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<div class="spinner"></div> Analyzing Scan Pipeline...`;
+
+            animatePipelineProgress();
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch(`${API_URL}/api/predict`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error("Diagnosis request failed");
+                }
+
+                const result = await response.json();
+                
+                document.getElementById('step-5').classList.remove('active');
+                document.getElementById('step-5').classList.add('completed');
+                
+                renderResults(result);
+
+            } catch (err) {
+                alert(`API Error: Make sure FastAPI server is running at ${API_URL}.\nDetails: ${err.message}`);
+                document.getElementById('progress-pipeline').style.display = 'none';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-microscope"></i> Run AI Cancer Diagnosis`;
+            }
+        }
+
+        function renderResults(result) {
+            lastAnalysisResult = result;
+            enhancedImgB64 = result.enhanced_xray_b64;
+            heatmapImgB64 = result.heatmap_overlay_b64;
+
+            const resultsPanel = document.getElementById('results-panel');
+            resultsPanel.style.opacity = '1';
+            resultsPanel.style.pointerEvents = 'auto';
+
+            showView('xray');
+            document.getElementById('viewer-toggle-box').style.display = 'flex';
+
+            document.getElementById('verdict-box').style.display = 'flex';
+            document.getElementById('verdict-class').innerText = result.prediction.replace('_', ' ').toUpperCase();
+            
+            const riskBadge = document.getElementById('verdict-risk');
+            riskBadge.innerText = `${result.risk_level} (${result.confidence}%)`;
+            riskBadge.style.background = `${result.badge_color}25`;
+            riskBadge.style.border = `1px solid ${result.badge_color}`;
+            riskBadge.style.color = result.badge_color;
+
+            const probContainer = document.getElementById('prob-bars');
+            probContainer.style.display = 'flex';
+            probContainer.innerHTML = '';
+
+            for (const [cls, prob] of Object.entries(result.probabilities)) {
+                const percent = (prob * 100).toFixed(1);
+                const isTop = cls === result.prediction;
+                const barColor = isTop ? result.badge_color : '#38bdf8';
+
+                const item = document.createElement('div');
+                item.className = 'prob-item';
+                item.innerHTML = `
+                    <div class="prob-meta">
+                        <span style="text-transform: capitalize; color: ${isTop ? '#fff' : 'var(--text-muted)'}; font-weight: ${isTop ? '700' : '500'}">
+                            ${cls.replace('_', ' ')}
+                        </span>
+                        <span style="color: ${barColor}">${percent}%</span>
+                    </div>
+                    <div class="prob-bar-bg">
+                        <div class="prob-bar-fill" style="background: ${barColor}; width: ${percent}%;"></div>
+                    </div>
+                `;
+                probContainer.appendChild(item);
+            }
+
+            document.getElementById('clinical-box').style.display = 'block';
+            document.getElementById('clinical-text').innerText = `${result.description} Recommended Action: ${result.recommended_action}`;
+        }
+
+        function showView(type) {
+            const img = document.getElementById('display-img');
+            const btnXray = document.getElementById('btn-show-xray');
+            const btnCam = document.getElementById('btn-show-cam');
+
+            if (type === 'xray') {
+                img.src = enhancedImgB64 || img.src;
+                btnXray.classList.add('active');
+                btnCam.classList.remove('active');
+            } else {
+                img.src = heatmapImgB64 || img.src;
+                btnCam.classList.add('active');
+                btnXray.classList.remove('active');
+            }
+        }
+
+        // ==========================================
+        // BONEAI MEDICAL ASSISTANT FE CONTROLLER
+        // ==========================================
+        function toggleAssistantPanel() {
+            const panel = document.getElementById('assistant-panel');
+            if (panel.style.display === 'none' || !panel.style.display) {
+                panel.style.display = 'flex';
+                document.getElementById('assistant-input').focus();
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        function getScanContext() {
+            if (!lastAnalysisResult) return null;
+            return {
+                prediction: lastAnalysisResult.prediction,
+                confidence: lastAnalysisResult.confidence,
+                risk_level: lastAnalysisResult.risk_level,
+                description: lastAnalysisResult.description,
+                recommended_action: lastAnalysisResult.recommended_action,
+                probabilities: lastAnalysisResult.probabilities
+            };
+        }
+
+        function sendQuickPrompt(promptText) {
+            const panel = document.getElementById('assistant-panel');
+            if (panel.style.display === 'none' || !panel.style.display) {
+                panel.style.display = 'flex';
+            }
+            document.getElementById('assistant-input').value = promptText;
+            sendAssistantMessage();
+        }
+
+        async function sendAssistantMessage() {
+            const input = document.getElementById('assistant-input');
+            const userText = input.value.trim();
+            if (!userText) return;
+
+            appendChatMessage('user', userText);
+            input.value = '';
+
+            const typingMsgEl = appendTypingIndicator();
+
+            try {
+                const response = await fetch(`${API_URL}/api/assistant/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: userText,
+                        analysis_context: getScanContext(),
+                        conversation: []
+                    })
+                });
+
+                removeTypingIndicator(typingMsgEl);
+
+                if (!response.ok) {
+                    throw new Error("Assistant service error");
+                }
+
+                const data = await response.json();
+                appendChatMessage('assistant', data.reply, data.suggested_questions || []);
+
+            } catch (err) {
+                removeTypingIndicator(typingMsgEl);
+                appendChatMessage('assistant', "I am currently having trouble connecting to the backend medical service. Please ensure the server is running on " + API_URL + "!");
+            }
+        }
+
+        function appendChatMessage(role, text, suggestedQuestions = []) {
+            const history = document.getElementById('assistant-chat-history');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-message ${role}`;
+
+            const formattedText = formatMarkdownText(text);
+
+            msgDiv.innerHTML = `
+                <div class="message-bubble">${formattedText}</div>
+                <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            `;
+            history.appendChild(msgDiv);
+            history.scrollTop = history.scrollHeight;
+
+            if (role === 'assistant' && suggestedQuestions && suggestedQuestions.length > 0) {
+                updatePromptChips(suggestedQuestions);
+            }
+        }
+
+        function appendTypingIndicator() {
+            const history = document.getElementById('assistant-chat-history');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message assistant typing-indicator-msg';
+            msgDiv.innerHTML = `
+                <div class="message-bubble" style="display: flex; gap: 6px; align-items: center; padding: 10px 16px;">
+                    <div class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">BoneAI is typing...</span>
+                </div>
+            `;
+            history.appendChild(msgDiv);
+            history.scrollTop = history.scrollHeight;
+            return msgDiv;
+        }
+
+        function removeTypingIndicator(el) {
+            if (el && el.parentNode) {
+                el.parentNode.removeChild(el);
+            }
+        }
+
+        function updatePromptChips(questions) {
+            const container = document.getElementById('assistant-prompt-chips');
+            container.innerHTML = '';
+            questions.forEach(q => {
+                const btn = document.createElement('button');
+                btn.className = 'prompt-chip';
+                btn.innerText = q;
+                btn.onclick = () => sendQuickPrompt(q);
+                container.appendChild(btn);
+            });
+        }
+
+        function formatMarkdownText(str) {
+            if (!str) return '';
+            let formatted = str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            formatted = formatted.replace(/\n/g, '<br>');
+            return formatted;
+        }
+    </script>
+</body>
+</html>

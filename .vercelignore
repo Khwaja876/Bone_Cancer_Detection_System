@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pkl
+*.pth
+dataset/
+saved_models/
+notebooks/
+outputs/
+reports/
+*.ipynb

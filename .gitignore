@@ -1,0 +1,32 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment Variables & Secrets
+.env
+.env.local
+
+# PyTorch Models & Large Binary Files (Ignored for GitHub & Vercel)
+saved_models/*.pth
+*.pth
+*.pkl
+*.h5
+*.onnx
+
+# Dataset Raw / Processed Images
+dataset/
+
+# Vercel Build Output
+.vercel
+
+# IDE / OS Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
