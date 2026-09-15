@@ -1,15 +1,5 @@
 {
   "version": 2,
-  "public": true,
-  "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/frontend/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
-    }
-  ]
+  "framework": null,
+  "cleanUrls": true
 }
