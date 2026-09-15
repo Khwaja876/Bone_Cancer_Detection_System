@@ -14,6 +14,7 @@ __pycache__/
 
 # PyTorch Models & Large Binary Files (Ignored for GitHub & Vercel)
 saved_models/*.pth
+saved_models/users.json
 *.pth
 *.pkl
 *.h5
